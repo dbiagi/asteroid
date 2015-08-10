@@ -10,6 +10,7 @@ import java.util.LinkedList;
 import javax.imageio.ImageIO;
 
 import javax.swing.*;
+import javax.swing.text.Position;
 
 public class Board extends JPanel implements Runnable {
 
@@ -174,6 +175,8 @@ public class Board extends JPanel implements Runnable {
     private void messageReceived(String message) {
         System.out.println(message);
         String[] parts = message.split(":");
+        String[] args = null;
+        
         switch (parts[0]) {
             //Recebe o seu id no servidor
             case "id":
@@ -190,15 +193,20 @@ public class Board extends JPanel implements Runnable {
             //Recebe a nova coordenada xy do jogador remoto
             case "xy":
                 //"xy: 100,200"
-                String[] pCoords = parts[1].split(",");
-                remotePlayer.setPosition(new Point(Integer.parseInt(pCoords[0]), 
-                        Integer.parseInt(pCoords[1])));
+                args = parts[1].split(",");
+                remotePlayer.setPosition(new Point(Integer.parseInt(args[0]), 
+                        Integer.parseInt(args[1])));
                 break;
             case "fire":
-                String[] aCoords = parts[1].split(",");
-                fire(new Point(Integer.parseInt(aCoords[0]), 
-                        Integer.parseInt(aCoords[1])));
+                args = parts[1].split(",");
+                fire(new Point(Integer.parseInt(args[0]), 
+                        Integer.parseInt(args[1])));
                 break;
+            case "asteroid":
+                args = parts[1].split(",");
+                createAsteroid(new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])));
+                break;
+                
         }
     }
 
@@ -255,6 +263,7 @@ public class Board extends JPanel implements Runnable {
                 Thread.sleep((int) FPS);
                 asteroidTimer += FPS;
 
+                /*
                 //Cria 1 asteroid a cada 1s
                 if (asteroidTimer >= 1000) {
                     if (xAsteroid + 100 < this.getWidth() - asteroidImage.getWidth()) {
@@ -265,7 +274,7 @@ public class Board extends JPanel implements Runnable {
                     createAsteroid(new Point(xAsteroid, yiAsteroid));
                     asteroidTimer = 0;
                 }
-
+                */
                 LinkedList<Asteroid> auxAsteroid = (LinkedList<Asteroid>) asteroids.clone();
                 LinkedList<Bullet> auxBullet = (LinkedList<Bullet>) bullets.clone();
 
