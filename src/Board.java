@@ -129,8 +129,8 @@ public class Board extends JPanel implements Runnable {
         }
     }
 
-    private void createAsteroid(Point pos) {
-        asteroids.addFirst(new Asteroid(pos, new Dimension(asteroidImage.getWidth(), asteroidImage.getHeight())));
+    private void createAsteroid(Point pos, Point speed) {
+        asteroids.addFirst(new Asteroid(pos, new Dimension(asteroidImage.getWidth(), asteroidImage.getHeight()), speed));
     }
 
     private void fire(Point pos) {
@@ -204,7 +204,8 @@ public class Board extends JPanel implements Runnable {
                 break;
             case "asteroid":
                 args = parts[1].split(",");
-                createAsteroid(new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])));
+                createAsteroid(new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])),
+                        new Point(Integer.parseInt(args[2]), Integer.parseInt(args[3])));
                 break;
                 
         }
@@ -381,6 +382,11 @@ public class Board extends JPanel implements Runnable {
             setPosition(position);
             setSize(size);
             setSpeed(new Point(0, 5));
+        }
+        
+        public Asteroid(Point position, Dimension size, Point speed){
+            this(position, size);
+            setSpeed(speed);
         }
     }
 
