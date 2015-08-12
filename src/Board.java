@@ -264,18 +264,6 @@ public class Board extends JPanel implements Runnable {
                 Thread.sleep((int) FPS);
                 asteroidTimer += FPS;
 
-                /*
-                //Cria 1 asteroid a cada 1s
-                if (asteroidTimer >= 1000) {
-                    if (xAsteroid + 100 < this.getWidth() - asteroidImage.getWidth()) {
-                        xAsteroid += 100;
-                    } else {
-                        xAsteroid = xiAsteroid;
-                    }
-                    createAsteroid(new Point(xAsteroid, yiAsteroid));
-                    asteroidTimer = 0;
-                }
-                */
                 LinkedList<Asteroid> auxAsteroid = (LinkedList<Asteroid>) asteroids.clone();
                 LinkedList<Bullet> auxBullet = (LinkedList<Bullet>) bullets.clone();
 
@@ -322,7 +310,6 @@ public class Board extends JPanel implements Runnable {
                 repaint();
             } catch (Exception e) {
             }
-
         }
     }
 
@@ -379,22 +366,22 @@ public class Board extends JPanel implements Runnable {
 
     private class Asteroid extends Sprite {
         public Asteroid(Point position, Dimension size) {
-            setPosition(position);
-            setSize(size);
-            setSpeed(new Point(0, 5));
+            this.setPosition(position);
+            this.setSize(size);
+            this.setSpeed(new Point(0, 5));
         }
         
         public Asteroid(Point position, Dimension size, Point speed){
             this(position, size);
-            setSpeed(speed);
+            this.setSpeed(speed);
         }
     }
 
     private class Bullet extends Sprite {
         public Bullet(Point position, Dimension size) {
-            setPosition(position);
-            setSize(size);
-            setSpeed(new Point(0, 10));
+            this.setPosition(position);
+            this.setSize(size);
+            this.setSpeed(new Point(0, 10));
         }
     }
 
@@ -404,13 +391,13 @@ public class Board extends JPanel implements Runnable {
         private boolean isAlive;
 
         public Player(Point position, Dimension size) {
-            setPosition(position);
-            setSize(size);
-            isAlive = true;
+            this.setPosition(position);
+            this.setSize(size);
+            this.isAlive = true;
         }
 
         public int getId() {
-            return id;
+            return this.id;
         }
 
         public void setId(int id) {
@@ -418,7 +405,7 @@ public class Board extends JPanel implements Runnable {
         }
 
         public boolean isAlive() {
-            return isAlive;
+            return this.isAlive;
         }
 
         public void setAlive(boolean isAlive) {
