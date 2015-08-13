@@ -1,6 +1,8 @@
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -27,6 +29,7 @@ public class Board extends JPanel implements Runnable {
     private static BufferedImage bluePlayerImage;
     private static BufferedImage asteroidImage;
     private static BufferedImage bulletImage;
+    private static BufferedImage texture;
     private boolean isPaused = true;
     private int asteroidTimer = 0;
     private float FPS;
@@ -65,6 +68,7 @@ public class Board extends JPanel implements Runnable {
         bluePlayerImage = loadImage("spaceship_azul.png");
         asteroidImage = loadImage("asteroid.png");
         bulletImage = loadImage("projetil.png");
+        texture = this.loadImage("texture.jpg");
     }
 
     //Inicia variaveis dos jogadores
@@ -83,20 +87,20 @@ public class Board extends JPanel implements Runnable {
                 if (e.getKeyCode() == KeyEvent.VK_F2) {
                     startGame();
                 }
-                
+
                 if (!isPaused && localPlayer.isAlive()) {
                     //Move o jogador para a esquerda, e envia mensagem para o jogador remoto informando sua nova posição
                     if (e.getKeyCode() == KeyEvent.VK_LEFT) {
                         localPlayer.getPosition().x -= 10;
-                        sendMessage("xy:" + localPlayer.getPosition().x + "," + 
-                                localPlayer.getPosition().y);
+                        sendMessage("xy:" + localPlayer.getPosition().x + ","
+                                + localPlayer.getPosition().y);
                     } else if (e.getKeyCode() == KeyEvent.VK_RIGHT) { //Move o jogador para a direita, e envia mensagem para o jogador remoto informando sua nova posição
                         localPlayer.getPosition().x += 10;
-                        sendMessage("xy:" + localPlayer.getPosition().x + "," + 
-                                localPlayer.getPosition().y);
+                        sendMessage("xy:" + localPlayer.getPosition().x + ","
+                                + localPlayer.getPosition().y);
                     } else if (e.getKeyCode() == KeyEvent.VK_SPACE) { //Cria um projetil e envia mensagem para o jogador removo informando sua posição
-                        Point bulletPoint = new Point(localPlayer.getPosition().x + 
-                                localPlayer.getSize().width / 2,
+                        Point bulletPoint = new Point(localPlayer.getPosition().x
+                                + localPlayer.getSize().width / 2,
                                 localPlayer.getPosition().y);
                         fire(bulletPoint);
                         sendMessage("fire:" + bulletPoint.x + "," + bulletPoint.y);
@@ -109,14 +113,14 @@ public class Board extends JPanel implements Runnable {
     private void startGame() {
         if (localPlayer.getId() == 1) {
             localPlayer.setPosition(new Point(100,
-                    (int)this.getPreferredSize().getHeight() - localPlayer.getSize().height - 20));
-            remotePlayer.setPosition(new Point((int)this.getPreferredSize().getWidth() - 100,
-                    (int)this.getPreferredSize().getHeight() - remotePlayer.getSize().height - 20));
+                    (int) this.getPreferredSize().getHeight() - localPlayer.getSize().height - 20));
+            remotePlayer.setPosition(new Point((int) this.getPreferredSize().getWidth() - 100,
+                    (int) this.getPreferredSize().getHeight() - remotePlayer.getSize().height - 20));
         } else {
-            localPlayer.setPosition(new Point((int)this.getPreferredSize().getWidth() - 100,
-                   (int)this.getPreferredSize().getHeight() - localPlayer.getSize().height - 20));
+            localPlayer.setPosition(new Point((int) this.getPreferredSize().getWidth() - 100,
+                    (int) this.getPreferredSize().getHeight() - localPlayer.getSize().height - 20));
             remotePlayer.setPosition(new Point(100,
-                    (int)this.getPreferredSize().getHeight() - remotePlayer.getSize().height - 20));
+                    (int) this.getPreferredSize().getHeight() - remotePlayer.getSize().height - 20));
         }
 
         isPaused = false;
@@ -129,8 +133,8 @@ public class Board extends JPanel implements Runnable {
         }
     }
 
-    private void createAsteroid(Point pos, Point speed) {
-        asteroids.addFirst(new Asteroid(pos, new Dimension(asteroidImage.getWidth(), asteroidImage.getHeight()), speed));
+    private void createAsteroid(Point pos, Dimension size, Point speed) {
+        asteroids.addFirst(new Asteroid(pos, size, speed));
     }
 
     private void fire(Point pos) {
@@ -144,7 +148,7 @@ public class Board extends JPanel implements Runnable {
             oos = new ObjectOutputStream(socket.getOutputStream());
             ois = new ObjectInputStream(socket.getInputStream());
             startListeningServer();
-            
+
             //Envia um ok para o outro jogador
             sendMessage("ok:" + localPlayer.getId());
         } catch (Exception e) {
@@ -176,7 +180,7 @@ public class Board extends JPanel implements Runnable {
         System.out.println(message);
         String[] parts = message.split(":");
         String[] args = null;
-        
+
         switch (parts[0]) {
             //Recebe o seu id no servidor
             case "id":
@@ -185,29 +189,32 @@ public class Board extends JPanel implements Runnable {
             //Recebe o ok do outro jogador
             case "ok":
                 remotePlayer.setId(Integer.parseInt(parts[1]));
-                if(isPaused){
+                if (isPaused) {
                     startGame();
-                    sendMessage("ok:" + localPlayer.getId());                
+                    sendMessage("ok:" + localPlayer.getId());
                 }
                 break;
             //Recebe a nova coordenada xy do jogador remoto
             case "xy":
                 //"xy: 100,200"
                 args = parts[1].split(",");
-                remotePlayer.setPosition(new Point(Integer.parseInt(args[0]), 
+                remotePlayer.setPosition(new Point(Integer.parseInt(args[0]),
                         Integer.parseInt(args[1])));
                 break;
             case "fire":
                 args = parts[1].split(",");
-                fire(new Point(Integer.parseInt(args[0]), 
+                fire(new Point(Integer.parseInt(args[0]),
                         Integer.parseInt(args[1])));
                 break;
             case "asteroid":
                 args = parts[1].split(",");
-                createAsteroid(new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])),
-                        new Point(Integer.parseInt(args[2]), Integer.parseInt(args[3])));
+                createAsteroid(
+                        new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])),
+                        //new Dimension(Integer.parseInt(args[2]), Integer.parseInt(args[3])),
+                        new Dimension(50, 45),
+                        new Point(Integer.parseInt(args[2]), Integer.parseInt(args[3]))
+                );
                 break;
-                
         }
     }
 
@@ -232,9 +239,17 @@ public class Board extends JPanel implements Runnable {
             g2d.setFont(new Font("Segoe UI Light", Font.BOLD, 36));
             g2d.drawString("Esperando o 2º jogador.", this.getSize().width / 2 - 200, this.getSize().height / 2);
         } else {
-            
+
+            //Textura para os asteroids
+            Rectangle rect = new Rectangle(0, 0, texture.getWidth() - 1, texture.getHeight() - 1);
+            TexturePaint paint = new TexturePaint(texture, rect);
+            g2d.setPaint(paint);
             for (Asteroid a : asteroids) {
-                g2d.drawImage(asteroidImage, a.getPosition().x, a.getPosition().y, null);
+                g2d.fillOval(a.getPosition().x,
+                        a.getPosition().y,
+                        a.getSize().width,
+                        a.getSize().height);
+                //g2d.drawImage(asteroidImage, a.getPosition().x, a.getPosition().y, null);
             }
 
             for (Bullet b : bullets) {
@@ -250,7 +265,7 @@ public class Board extends JPanel implements Runnable {
                 g2d.drawImage(redPlayerImage, remotePlayer.getPosition().x,
                         remotePlayer.getPosition().y, null);
             }
-            
+
             g2d.setColor(new Color(128, 0, 255));
             g2d.setFont(new Font("Segoe UI Light", Font.BOLD, 36));
             g2d.drawString("Score:" + score, this.getWidth() - 200, 50);
@@ -297,7 +312,6 @@ public class Board extends JPanel implements Runnable {
                     }
                 }
                 asteroids = auxAsteroid;
-
 
                 for (Bullet b : bullets) {
                     b.getPosition().y -= b.getSpeed().y;
@@ -365,19 +379,21 @@ public class Board extends JPanel implements Runnable {
     }
 
     private class Asteroid extends Sprite {
+
         public Asteroid(Point position, Dimension size) {
             this.setPosition(position);
             this.setSize(size);
             this.setSpeed(new Point(0, 5));
         }
-        
-        public Asteroid(Point position, Dimension size, Point speed){
+
+        public Asteroid(Point position, Dimension size, Point speed) {
             this(position, size);
             this.setSpeed(speed);
         }
     }
 
     private class Bullet extends Sprite {
+
         public Bullet(Point position, Dimension size) {
             this.setPosition(position);
             this.setSize(size);
