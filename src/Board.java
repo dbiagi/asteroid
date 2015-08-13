@@ -8,13 +8,9 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.LinkedList;
 import javax.imageio.ImageIO;
-
 import javax.swing.*;
-import javax.swing.text.Position;
 
 public class Board extends JPanel implements Runnable {
-
-    private String playerName;
     private Thread t;
     private LinkedList<Asteroid> asteroids;
     private LinkedList<Bullet> bullets;
@@ -28,14 +24,7 @@ public class Board extends JPanel implements Runnable {
     private static BufferedImage asteroidImage;
     private static BufferedImage bulletImage;
     private boolean isPaused = true;
-    private int asteroidTimer = 0;
     private float FPS;
-    //Posiçao x inicial do asteroid
-    private int xiAsteroid = 20;
-    //Posição x do ultimo asteroid criado
-    private int xAsteroid;
-    //Posição y inicial do asteroid
-    private int yiAsteroid = 10;
     //Variaveis para uso na coneção
     private String serverIpAdress;
     private int PORT = 40541;
@@ -45,7 +34,6 @@ public class Board extends JPanel implements Runnable {
 
     public Board(String serverIpAdress, String playerName) {
         this.serverIpAdress = serverIpAdress;
-        this.playerName = playerName;
         asteroids = new LinkedList<>();
         bullets = new LinkedList<>();
         setFocusable(true);
@@ -53,7 +41,7 @@ public class Board extends JPanel implements Runnable {
         setPreferredSize(new Dimension(800, 600));
         addKeyboardListener();
         loadResources();
-        setUpPlayers();
+        setUpPlayers(playerName);
         FPS = 60;
         connectToServer();
     }
@@ -68,9 +56,10 @@ public class Board extends JPanel implements Runnable {
     }
 
     //Inicia variaveis dos jogadores
-    private void setUpPlayers() {
+    private void setUpPlayers(String playerName) {
         localPlayer = new Player(new Point(),
                 new Dimension(bluePlayerImage.getWidth(), bluePlayerImage.getHeight()));
+        localPlayer.setName(playerName);
         remotePlayer = new Player(new Point(),
                 new Dimension(redPlayerImage.getWidth(), redPlayerImage.getHeight()));
     }
@@ -262,20 +251,7 @@ public class Board extends JPanel implements Runnable {
         while (true) {
             try {
                 Thread.sleep((int) FPS);
-                asteroidTimer += FPS;
-
-                /*
-                //Cria 1 asteroid a cada 1s
-                if (asteroidTimer >= 1000) {
-                    if (xAsteroid + 100 < this.getWidth() - asteroidImage.getWidth()) {
-                        xAsteroid += 100;
-                    } else {
-                        xAsteroid = xiAsteroid;
-                    }
-                    createAsteroid(new Point(xAsteroid, yiAsteroid));
-                    asteroidTimer = 0;
-                }
-                */
+                
                 LinkedList<Asteroid> auxAsteroid = (LinkedList<Asteroid>) asteroids.clone();
                 LinkedList<Bullet> auxBullet = (LinkedList<Bullet>) bullets.clone();
 
@@ -402,7 +378,8 @@ public class Board extends JPanel implements Runnable {
 
         private int id;
         private boolean isAlive;
-
+        private String name;
+        
         public Player(Point position, Dimension size) {
             setPosition(position);
             setSize(size);
@@ -423,6 +400,14 @@ public class Board extends JPanel implements Runnable {
 
         public void setAlive(boolean isAlive) {
             this.isAlive = isAlive;
+        }
+        
+        public void setName(String name){
+            this.name = name;
+        }
+        
+        public String getName(){
+            return this.name;
         }
     }
 }
