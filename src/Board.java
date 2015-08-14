@@ -1,8 +1,6 @@
-
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.geom.Rectangle2D;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -10,9 +8,7 @@ import java.io.ObjectOutputStream;
 import java.net.Socket;
 import java.util.LinkedList;
 import javax.imageio.ImageIO;
-
 import javax.swing.*;
-import javax.swing.text.Position;
 
 public class Board extends JPanel implements Runnable {
 
@@ -27,7 +23,7 @@ public class Board extends JPanel implements Runnable {
     private static BufferedImage backgroundImage;
     private static BufferedImage redPlayerImage;
     private static BufferedImage bluePlayerImage;
-    private static BufferedImage asteroidImage;
+    private static BufferedImage[] asteroidImage = new BufferedImage[3];
     private static BufferedImage bulletImage;
     private static BufferedImage texture;
     private boolean isPaused = true;
@@ -66,7 +62,9 @@ public class Board extends JPanel implements Runnable {
         backgroundImage = loadImage("Background.jpg");
         redPlayerImage = loadImage("spaceship_vermelho.png");
         bluePlayerImage = loadImage("spaceship_azul.png");
-        asteroidImage = loadImage("asteroid.png");
+        asteroidImage[0] = loadImage("asteroid1.png");
+        asteroidImage[1] = loadImage("asteroid2.png");
+        asteroidImage[2] = loadImage("asteroid3.png");
         bulletImage = loadImage("projetil.png");
         texture = this.loadImage("texture.jpg");
     }
@@ -133,8 +131,9 @@ public class Board extends JPanel implements Runnable {
         }
     }
 
-    private void createAsteroid(Point pos, Dimension size, Point speed) {
-        asteroids.addFirst(new Asteroid(pos, size, speed));
+    private void createAsteroid(Point pos, Point speed, int radius) {
+        Dimension size = new Dimension(asteroidImage[radius].getWidth(), asteroidImage[radius].getHeight());
+        asteroids.addFirst(new Asteroid(pos, speed, size, radius));
     }
 
     private void fire(Point pos) {
@@ -210,9 +209,8 @@ public class Board extends JPanel implements Runnable {
                 args = parts[1].split(",");
                 createAsteroid(
                         new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])),
-                        //new Dimension(Integer.parseInt(args[2]), Integer.parseInt(args[3])),
-                        new Dimension(50, 45),
-                        new Point(Integer.parseInt(args[2]), Integer.parseInt(args[3]))
+                        new Point(Integer.parseInt(args[2]), Integer.parseInt(args[3])),
+                        Integer.parseInt(args[4])
                 );
                 break;
         }
@@ -240,16 +238,8 @@ public class Board extends JPanel implements Runnable {
             g2d.drawString("Esperando o 2º jogador.", this.getSize().width / 2 - 200, this.getSize().height / 2);
         } else {
 
-            //Textura para os asteroids
-            Rectangle rect = new Rectangle(0, 0, texture.getWidth() - 1, texture.getHeight() - 1);
-            TexturePaint paint = new TexturePaint(texture, rect);
-            g2d.setPaint(paint);
             for (Asteroid a : asteroids) {
-                g2d.fillOval(a.getPosition().x,
-                        a.getPosition().y,
-                        a.getSize().width,
-                        a.getSize().height);
-                //g2d.drawImage(asteroidImage, a.getPosition().x, a.getPosition().y, null);
+                g2d.drawImage(asteroidImage[a.getRadius()], a.getPosition().x, a.getPosition().y, null);
             }
 
             for (Bullet b : bullets) {
@@ -274,7 +264,7 @@ public class Board extends JPanel implements Runnable {
 
     @Override
     public void run() {
-        while (true) {
+        while (!isPaused) {
             try {
                 Thread.sleep((int) FPS);
                 asteroidTimer += FPS;
@@ -346,39 +336,37 @@ public class Board extends JPanel implements Runnable {
         int h1 = sprite1.getSize().height;
         int w2 = sprite2.getSize().width;
         int h2 = sprite2.getSize().height;
-        if (((pos1.x > pos2.x && pos1.x < pos2.x + w2)
+        return (((pos1.x > pos2.x && pos1.x < pos2.x + w2)
                 && (pos1.y > pos2.y && pos1.y < pos2.y + h2))
                 || ((pos2.x > pos1.x && pos2.x < pos1.x + w1)
-                && (pos2.y > pos1.y && pos2.y < pos1.y + h1))) {
-            return true;
-        } else {
-            return false;
-        }
+                && (pos2.y > pos1.y && pos2.y < pos1.y + h1)));
     }
 
-    @Override
-    public void update(Graphics g) {
-        super.paint(g);
-        Image offScreen = null;
-        Graphics offGraphics = null;
-        Graphics2D g2d = (Graphics2D) g.create();
-        Dimension dimension = getSize();
-        if (offScreen == null) {
-            offScreen = createImage(dimension.width, dimension.height);
-            if (offGraphics != null) {
-                offGraphics.dispose();
+
+        @Override
+        public void update(Graphics g) {
+            super.paint(g);
+            Image offScreen = null;
+            Graphics offGraphics = null;
+            Graphics2D g2d = (Graphics2D) g.create();
+            Dimension dimension = getSize();
+            if (offScreen == null) {
+                offScreen = createImage(dimension.width, dimension.height);
+                if (offGraphics != null) {
+                    offGraphics.dispose();
+                }
+                offGraphics = offScreen.getGraphics();
             }
-            offGraphics = offScreen.getGraphics();
+            offGraphics.setColor(getBackground());
+            offGraphics.fillRect(0, 0, dimension.width, dimension.height);
+            offGraphics.setColor(Color.black);
+            paint(offGraphics);
+            g2d.drawImage(offScreen, 0, 0, null);
+            g2d.dispose();
         }
-        offGraphics.setColor(getBackground());
-        offGraphics.fillRect(0, 0, dimension.width, dimension.height);
-        offGraphics.setColor(Color.black);
-        paint(offGraphics);
-        g2d.drawImage(offScreen, 0, 0, null);
-        g2d.dispose();
-    }
 
     private class Asteroid extends Sprite {
+        private int radius = 0;
 
         public Asteroid(Point position, Dimension size) {
             this.setPosition(position);
@@ -386,9 +374,18 @@ public class Board extends JPanel implements Runnable {
             this.setSpeed(new Point(0, 5));
         }
 
-        public Asteroid(Point position, Dimension size, Point speed) {
+        public Asteroid(Point position, Point speed, Dimension size, int radius) {
             this(position, size);
             this.setSpeed(speed);
+            this.setRadius(radius);
+        }
+
+        public int getRadius() {
+            return this.radius;
+        }
+
+        public void setRadius(int radius) {
+            this.radius = radius;
         }
     }
 
