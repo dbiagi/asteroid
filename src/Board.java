@@ -13,7 +13,7 @@ import javax.swing.*;
 public class Board extends JPanel implements Runnable {
 
     private String playerName;
-    private Thread t;
+    private Thread thread;
     private LinkedList<Asteroid> asteroids;
     private LinkedList<Bullet> bullets;
     private Player localPlayer;
@@ -59,7 +59,7 @@ public class Board extends JPanel implements Runnable {
 
     //Carrega imagens
     private void loadResources() {
-        backgroundImage = loadImage("Background.jpg");
+        backgroundImage = loadImage("background.png");
         redPlayerImage = loadImage("spaceship_vermelho.png");
         bluePlayerImage = loadImage("spaceship_azul.png");
         asteroidImage[0] = loadImage("asteroid1.png");
@@ -108,6 +108,7 @@ public class Board extends JPanel implements Runnable {
         });
     }
 
+    //instancia os jogadores e inicia a principal thread
     private void startGame() {
         if (localPlayer.getId() == 1) {
             localPlayer.setPosition(new Point(100,
@@ -123,11 +124,11 @@ public class Board extends JPanel implements Runnable {
 
         isPaused = false;
 
-        if (t == null) {
-            t = new Thread(this);
+        if (thread == null) {
+            thread = new Thread(this);
         }
-        if (!t.isAlive()) {
-            t.start();
+        if (!thread.isAlive()) {
+            thread.start();
         }
     }
 
@@ -181,31 +182,28 @@ public class Board extends JPanel implements Runnable {
         String[] args = null;
 
         switch (parts[0]) {
-            //Recebe o seu id no servidor
-            case "id":
+            case "id": //Recebe o seu id no servidor
                 localPlayer.setId(Integer.parseInt(parts[1]));
                 break;
-            //Recebe o ok do outro jogador
-            case "ok":
+            case "ok": //Recebe o ok do outro jogador
                 remotePlayer.setId(Integer.parseInt(parts[1]));
                 if (isPaused) {
                     startGame();
                     sendMessage("ok:" + localPlayer.getId());
                 }
                 break;
-            //Recebe a nova coordenada xy do jogador remoto
-            case "xy":
+            case "xy": //Recebe a nova coordenada xy do jogador remoto
                 //"xy: 100,200"
                 args = parts[1].split(",");
                 remotePlayer.setPosition(new Point(Integer.parseInt(args[0]),
                         Integer.parseInt(args[1])));
                 break;
-            case "fire":
+            case "fire": //Recebe as coordanas do tiro do jogador remoto
                 args = parts[1].split(",");
                 fire(new Point(Integer.parseInt(args[0]),
                         Integer.parseInt(args[1])));
                 break;
-            case "asteroid":
+            case "asteroid": //Recebe as informações para criação de um asteroide
                 args = parts[1].split(",");
                 createAsteroid(
                         new Point(Integer.parseInt(args[0]), Integer.parseInt(args[1])),
@@ -273,15 +271,17 @@ public class Board extends JPanel implements Runnable {
                 LinkedList<Bullet> auxBullet = (LinkedList<Bullet>) bullets.clone();
 
                 for (Asteroid a : asteroids) {
-                    //Decresce o valor  y dos asteroides
+                    //Move asteroid para baixo
                     a.getPosition().y += a.getSpeed().y;
 
-                    //Verifica se algum asteroid atingiu algum jogador
+                    //Se o jogador local estiver vivo, verifica se algum asteroid o atingiu
                     if (localPlayer.isAlive()) {
                         if (collisionDetection(a, localPlayer)) {
                             localPlayer.setAlive(false);
                         }
                     }
+
+                    //Se o jogador remoto estiver vivo, verifica se algum asteroid o atingiu
                     if (remotePlayer.isAlive()) {
                         if (collisionDetection(a, remotePlayer)) {
                             remotePlayer.setAlive(false);
@@ -317,7 +317,7 @@ public class Board extends JPanel implements Runnable {
         }
     }
 
-    //Carrega imagens na pasta img
+    //Retorna imagem estanciada
     public BufferedImage loadImage(String fileName) {
         try {
             return ImageIO.read(getClass().getResource("/img/" + fileName));
@@ -327,6 +327,24 @@ public class Board extends JPanel implements Runnable {
             return null;
         }
     }
+
+    @Override
+    public void update(Graphics g) {
+        super.paint(g);
+        Image offScreen = null;
+        Graphics offGraphics = null;
+        Graphics2D g2d = (Graphics2D) g.create();
+        Dimension dimension = getSize();
+        offScreen = createImage(dimension.width, dimension.height);
+        offGraphics = offScreen.getGraphics();
+        offGraphics.setColor(getBackground());
+        offGraphics.fillRect(0, 0, dimension.width, dimension.height);
+        offGraphics.setColor(Color.black);
+        paint(offGraphics);
+        g2d.drawImage(offScreen, 0, 0, null);
+        g2d.dispose();
+    }
+
 
     //Detecta colisão entre dois sprites
     private boolean collisionDetection(Sprite sprite1, Sprite sprite2) {
@@ -341,29 +359,6 @@ public class Board extends JPanel implements Runnable {
                 || ((pos2.x > pos1.x && pos2.x < pos1.x + w1)
                 && (pos2.y > pos1.y && pos2.y < pos1.y + h1)));
     }
-
-
-        @Override
-        public void update(Graphics g) {
-            super.paint(g);
-            Image offScreen = null;
-            Graphics offGraphics = null;
-            Graphics2D g2d = (Graphics2D) g.create();
-            Dimension dimension = getSize();
-            if (offScreen == null) {
-                offScreen = createImage(dimension.width, dimension.height);
-                if (offGraphics != null) {
-                    offGraphics.dispose();
-                }
-                offGraphics = offScreen.getGraphics();
-            }
-            offGraphics.setColor(getBackground());
-            offGraphics.fillRect(0, 0, dimension.width, dimension.height);
-            offGraphics.setColor(Color.black);
-            paint(offGraphics);
-            g2d.drawImage(offScreen, 0, 0, null);
-            g2d.dispose();
-        }
 
     private class Asteroid extends Sprite {
         private int radius = 0;
