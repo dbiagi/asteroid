@@ -1,3 +1,4 @@
+
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
@@ -66,7 +67,6 @@ public class Board extends JPanel implements Runnable {
         asteroidImage[1] = loadImage("asteroid2.png");
         asteroidImage[2] = loadImage("asteroid3.png");
         bulletImage = loadImage("projetil.png");
-        texture = this.loadImage("texture.jpg");
     }
 
     //Inicia variaveis dos jogadores
@@ -320,6 +320,7 @@ public class Board extends JPanel implements Runnable {
     //Retorna imagem estanciada
     public BufferedImage loadImage(String fileName) {
         try {
+            System.out.println(getClass().getResource("/img/" + fileName));
             return ImageIO.read(getClass().getResource("/img/" + fileName));
         } catch (IOException e) {
             System.out.println("Content could not be read");
@@ -345,7 +346,6 @@ public class Board extends JPanel implements Runnable {
         g2d.dispose();
     }
 
-
     //Detecta colisão entre dois sprites
     private boolean collisionDetection(Sprite sprite1, Sprite sprite2) {
         Point pos1 = sprite1.getPosition();
@@ -361,6 +361,7 @@ public class Board extends JPanel implements Runnable {
     }
 
     private class Asteroid extends Sprite {
+
         private int radius = 0;
 
         public Asteroid(Point position, Dimension size) {
