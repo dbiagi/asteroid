@@ -3,6 +3,8 @@
 Trabalho da disciplina de Técnicas de Programação da turma de Sistemas de Informação.
 O trabalho consistem em um jogo de naves usando sockets, onde até 2 jogadores podem jogar simultaneamente em rede.
 
+![Gameplay](http://i.imgur.com/awwnYMd.gif)
+
 ![Imagem demonstrativa](http://i.imgur.com/xCbNyOL.png)
 
 ## Como iniciar
